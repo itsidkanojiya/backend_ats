@@ -10,7 +10,7 @@ exports.register = async (req, res, next) => {
     }
     user = new User({ username, password });
     await user.save();
-    res.status(201).json({ message: 'User registered successfully' });
+    res.status(201).json({ message: 'User registered successfully', user: { id: user._id, username: user.username } });
   } catch (err) {
     next(err);
   }
@@ -24,7 +24,7 @@ exports.login = async (req, res, next) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    res.json({ token });
+    res.json({ message: 'Login successful', token, user: { id: user._id, username: user.username } });
   } catch (err) {
     next(err);
   }
