@@ -3,14 +3,16 @@ const jwt = require('jsonwebtoken');
 
 exports.register = async (req, res, next) => {
   try {
-    const { username, password } = req.body;
-    let user = await User.findOne({ username });
+    const { email, password } = req.body;
+    console.log(email + " and "+ password)
+    let user = await User.findOne({ email: email });
     if (user) {
       return res.status(400).json({ message: 'User already exists' });
     }
-    user = new User({ username, password });
+    user = new User({ email, password });
     await user.save();
-    res.status(201).json({ message: 'User registered successfully', user: { id: user._id, username: user.username } });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    res.status(201).json({ token,message: 'User registered successfully' });
   } catch (err) {
     next(err);
   }
@@ -18,13 +20,19 @@ exports.register = async (req, res, next) => {
 
 exports.login = async (req, res, next) => {
   try {
-    const { username, password } = req.body;
-    const user = await User.findOne({ username });
-    if (!user || !(await user.matchPassword(password))) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+    const { email, password } = req.body;
+    console.log(email + " and "+ password)
+    const user = await User.findOne({ email: email });
+    console.log("user: " +user)
+    if (!user) {
+      return res.status(401).json({ message: "User Does not exist." });
+    }
+
+    if(!(await user.matchPassword(password))){
+      return res.status(401).json({ message: "Incorrect Password." })
     }
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    res.json({ message: 'Login successful', token, user: { id: user._id, username: user.username } });
+    res.status(200).json({ token ,message: 'User Login successfully'});
   } catch (err) {
     next(err);
   }
