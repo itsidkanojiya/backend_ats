@@ -5,13 +5,18 @@ const { use } = require("passport");
 
 exports.register = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
-    console.log(email + " and " + password);
+    const { name, email, password } = req.body;
+    console.log(`name: ${name}, email: ${email} and password: ${password}`);
+
+    if (!user || !password || !name) {
+      return res.status(401).json({ message: "Please fill all the details" });
+    }
+
     let user = await User.findOne({ email: email });
     if (user) {
       return res.status(400).json({ message: "User already exists" });
     }
-    user = new User({ email, password });
+    user = new User({ email, name, password });
     await user.save();
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
@@ -28,6 +33,9 @@ exports.login = async (req, res, next) => {
     console.log(email + " and " + password);
     const user = await User.findOne({ email: email });
     console.log("user: " + user);
+    if (!user || !password) {
+      return res.status(401).json({ message: "Email or Password is not provided." });
+    }
     if (!user) {
       return res.status(401).json({ message: "User Does not exist." });
     }
@@ -50,7 +58,7 @@ exports.forgotPassword = async (req, res, next) => {
     console.log("User Email: " + email);
 
     // check if email is empty
-    if (email == null) {
+    if (!email) {
       return res.status(404).json({ message: "No Email is provided." });
     }
     const user = await User.findOne({ email: email });
@@ -87,6 +95,10 @@ exports.forgotPassword = async (req, res, next) => {
 exports.resetPassword = async (req, res) => {
   try {
     const { token, password } = req.body;
+
+    if (!token || !password) {
+      return res.status(401).json({ message: "Token or Password is not provided." });
+    }
 
     // Verify token
     const decodedEmail = jwt.verify(token, process.env.JWT_SECRET);
