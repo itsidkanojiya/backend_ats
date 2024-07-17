@@ -8,7 +8,7 @@ exports.register = async (req, res, next) => {
     const { name, email, password } = req.body;
     console.log(`name: ${name}, email: ${email} and password: ${password}`);
 
-    if (!user || !password || !name) {
+    if (!email || !password || !name) {
       return res.status(401).json({ message: "Please fill all the details" });
     }
 
@@ -32,9 +32,8 @@ exports.login = async (req, res, next) => {
     const { email, password } = req.body;
     console.log(email + " and " + password);
     const user = await User.findOne({ email: email });
-    console.log("user: " + user);
-    if (!user || !password) {
-      return res.status(401).json({ message: "Email or Password is not provided." });
+    if (!email||!password) {
+      return res.status(401).json({ message: "Please fill all the details" });
     }
     if (!user) {
       return res.status(401).json({ message: "User Does not exist." });
@@ -91,10 +90,16 @@ exports.forgotPassword = async (req, res, next) => {
     return error;
   }
 };
-
 exports.resetPassword = async (req, res) => {
   try {
-    const { token, password } = req.body;
+    const { password } = req.body;
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ message: "Authorization token is not provided or improperly formatted." });
+    }
+
+    const token = authHeader.split(' ')[1];
 
     if (!token || !password) {
       return res.status(401).json({ message: "Token or Password is not provided." });
@@ -120,5 +125,7 @@ exports.resetPassword = async (req, res) => {
     res.status(200).json({ message: "Password updated successfully" });
   } catch (error) {
     console.log("Error: " + error);
+    res.status(500).json({ message: "Internal server error" });
   }
+
 };
